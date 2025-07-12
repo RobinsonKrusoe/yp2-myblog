@@ -1,0 +1,29 @@
+
+CREATE TABLE IF NOT EXISTS posts
+(
+    id          BIGINT  GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    title       VARCHAR(255)  NOT NULL,
+    text        VARCHAR(1000) NOT NULL,
+    image       BYTEA,
+    likes_count int NOT NULL DEFAULT 0,
+    created_at  timestamp DEFAULT (now()),
+    updated_at  timestamp DEFAULT (now())
+);
+
+CREATE TABLE IF NOT EXISTS comments
+(
+    id         BIGINT  GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    post_id    BIGINT NOT NULL,
+    text       VARCHAR(1000) NOT NULL,
+    created_at timestamp DEFAULT (now()),
+    CONSTRAINT fk_comment_ref_post FOREIGN KEY(post_id) REFERENCES posts(id)
+);
+
+CREATE TABLE IF NOT EXISTS tags (
+    id      BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    post_id BIGINT,
+    name    VARCHAR(50),
+    CONSTRAINT fk_tag_ref_post FOREIGN KEY(post_id) REFERENCES posts(id),
+    UNIQUE(post_id, name)
+);
+
