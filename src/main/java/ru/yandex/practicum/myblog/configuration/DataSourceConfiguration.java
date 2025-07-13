@@ -1,9 +1,13 @@
 package ru.yandex.practicum.myblog.configuration;
 
+import org.postgresql.Driver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 
 import javax.sql.DataSource;
 
@@ -11,12 +15,20 @@ import javax.sql.DataSource;
 public class DataSourceConfiguration {
 
     @Bean
-    public DataSource dataSource(){
+    public DataSource dataSource(
+            @Value("${spring.datasource.url}") String url,
+            @Value("${spring.datasource.username}") String username,
+            @Value("${spring.datasource.password}") String password){
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName("org.postgresql.Driver");
-        dataSource.setUrl("jdbc:postgresql://localhost:5432/postgres");
-        dataSource.setUsername( "postgres" );
-        dataSource.setPassword( "admin" );
+        dataSource.setDriverClassName(Driver.class.getName());
+        dataSource.setUrl(url);
+        dataSource.setUsername(username);
+        dataSource.setPassword(password);
+
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("schema.sql"));
+        populator.execute(dataSource);
+
         return dataSource;
     }
 
