@@ -20,7 +20,7 @@ public interface PostService {
      * @param newPost  Сообщения для вставки в базу
      * @return          Идентификатор нового сообщения
      */
-    long add(InPostDTO newPost) throws IOException;
+    OutPostDTO add(InPostDTO newPost)  throws IOException;
 
     /**
      * Редактирование сообщения

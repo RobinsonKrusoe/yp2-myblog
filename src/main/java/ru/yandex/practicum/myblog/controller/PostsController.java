@@ -126,14 +126,14 @@ public class PostsController {
     ) throws IOException {
         log.info("Post addPost title={}, text={}, tags={}", title, text, tags);
 
-        long newId = postServ.add(InPostDTO.builder()
+        OutPostDTO newPost = postServ.add(InPostDTO.builder()
                 .title(title)
                 .text(text)
                 .tags(tags)
                 .image(image)
                 .build());
 
-        return new ModelAndView("redirect:/posts/"+ newId);
+        return new ModelAndView("redirect:/posts/"+ newPost.getId());
     }
 
     /**

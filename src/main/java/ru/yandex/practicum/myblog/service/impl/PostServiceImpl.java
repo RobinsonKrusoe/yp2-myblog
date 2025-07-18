@@ -1,22 +1,23 @@
 package ru.yandex.practicum.myblog.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.myblog.dto.CommentDTO;
 import ru.yandex.practicum.myblog.dto.InPostDTO;
 import ru.yandex.practicum.myblog.dto.OutPostDTO;
 import ru.yandex.practicum.myblog.mapper.CommentMapper;
 import ru.yandex.practicum.myblog.mapper.PostMapper;
+import ru.yandex.practicum.myblog.mapper.TagMapper;
 import ru.yandex.practicum.myblog.model.Comment;
 import ru.yandex.practicum.myblog.model.Post;
-//import ru.yandex.practicum.myblog.repository.ComentRepository;
 import ru.yandex.practicum.myblog.model.Tag;
 import ru.yandex.practicum.myblog.repository.CommentRepository;
 import ru.yandex.practicum.myblog.repository.PostRepository;
-//import ru.yandex.practicum.myblog.repository.TagRepository;
 import ru.yandex.practicum.myblog.repository.TagRepository;
 import ru.yandex.practicum.myblog.service.PostService;
 
@@ -51,36 +52,47 @@ public class PostServiceImpl implements PostService {
      */
 
     @Override
-    public long add(InPostDTO newPost) throws IOException {
+    @Transactional
+    public OutPostDTO add(InPostDTO newPost) throws IOException {
         Post post = PostMapper.toPost(newPost);
-        long newId = postRepo.add(post);
+        post = postRepo.save(post);
 
         for(String tag : newPost.getTags().split(" "))
-            tagRepo.add(newId, tag);
+            tagRepo.save(TagMapper.toTag(post, tag));
 
-        return newId;
+        OutPostDTO ret = PostMapper.toPostDTO(post,
+                commRepo.findAllByPostId(post.getId()).stream().map(CommentMapper::toCommentDTO).toList(),
+                tagRepo.findAllByPostId(post.getId()).stream().map(Tag::getName).toList());
+
+        return ret;
 
     }
 
     /**
      * Редактирование сообщения
      *
-     * @param post Сообщения для редактирования
+     * @param inPost Сообщения для редактирования
      */
     @Override
-    public void edit(InPostDTO post) throws IOException {
-        postRepo.edit(PostMapper.toPost(post));
+    @Transactional
+    public void edit(InPostDTO inPost) throws IOException {
+        Post post = PostMapper.toPost(inPost);
+        post = postRepo.save(post);
 
-        for(String tag : post.getTags().split(" "))
-            tagRepo.add(post.getId(), tag);
+        for(String tag : inPost.getTags().split(" ")) {
+            if (!tagRepo.existsByPostIdAndName(post.getId(), tag)){
+                tagRepo.save(TagMapper.toTag(post, tag));
+            }
+        }
     }
 
     /**
      * Удаление сообщения
      */
     @Override
+    @Transactional
     public void del(Long id) {
-        postRepo.del(id);
+        postRepo.deleteById(id);
     }
 
     /**
@@ -90,7 +102,7 @@ public class PostServiceImpl implements PostService {
      */
     @Override
     public OutPostDTO getById(Long id) {
-        Post post = postRepo.findById(id);
+        Post post = postRepo.getReferenceById(id);
 
         return PostMapper.toPostDTO(post,
                 commRepo.findAllByPostId(post.getId())
@@ -134,7 +146,7 @@ public class PostServiceImpl implements PostService {
         if (tag == null || tag.isBlank() || tag.isEmpty())
             posts = postRepo.findAll();
         else
-            posts = postRepo.findAllByTag(tag);
+            posts = postRepo.findAllByTags_Name(tag);
 
         for(var post : posts)
             ret.add(PostMapper.toPostDTO(post,
@@ -181,16 +193,26 @@ public class PostServiceImpl implements PostService {
      * @param id Идентификатор сообщения
      */
     @Override
+    @Transactional
     public void incLike(Long id) {
-        postRepo.incLike(id);
+        Post post = postRepo.getReferenceById(id);
+
+        post.setLikesCount(post.getLikesCount() + 1);
+
+        postRepo.save(post);
     }
 
     /**
      * Дизлайк Сообщению
      */
     @Override
+    @Transactional
     public void decLike(Long id) {
-        postRepo.decLike(id);
+        Post post = postRepo.getReferenceById(id);
+
+        post.setLikesCount(post.getLikesCount() - 1);
+
+        postRepo.save(post);
     }
 
     /**
@@ -200,7 +222,13 @@ public class PostServiceImpl implements PostService {
      */
     @Override
     public void addComment(Long id, String text) {
-        commRepo.add(id, text);
+        Post post = postRepo.getReferenceById(id);
+
+        Comment comment = new Comment();
+        comment.setPost(post);
+        comment.setText(text);
+
+        commRepo.save(comment);
     }
 
     /**
@@ -210,7 +238,10 @@ public class PostServiceImpl implements PostService {
      */
     @Override
     public void editComment(Long commentId, String text) {
-        commRepo.edit(commentId, text);
+        Comment comment =commRepo.getReferenceById(commentId);
+        comment.setText(text);
+
+        commRepo.save(comment);
     }
 
     /**
@@ -219,7 +250,7 @@ public class PostServiceImpl implements PostService {
      */
     @Override
     public void delComment(Long commentId) {
-        commRepo.del(commentId);
+        commRepo.deleteById(commentId);
     }
 
     @Override
@@ -235,7 +266,8 @@ public class PostServiceImpl implements PostService {
      */
     @Override
     public byte[] getImage(Long id) {
-        return postRepo.findById(id).getImage();
+        Post post = postRepo.getReferenceById(id);
+        return post.getImage();
     }
 
 }
