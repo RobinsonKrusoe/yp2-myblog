@@ -1,13 +1,9 @@
 package ru.yandex.practicum.myblog.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.*;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.myblog.dto.CommentDTO;
 import ru.yandex.practicum.myblog.dto.InPostDTO;
 import ru.yandex.practicum.myblog.dto.OutPostDTO;
 import ru.yandex.practicum.myblog.mapper.CommentMapper;

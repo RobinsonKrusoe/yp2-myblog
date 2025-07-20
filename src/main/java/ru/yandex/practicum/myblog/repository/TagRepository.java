@@ -5,29 +5,23 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Set;
 
+/**
+ * Интерфейс репозитория для работы с тегами сообщения
+ */
 public interface TagRepository extends JpaRepository<Tag, Long> {
-    Set<Tag> findAllByPostId(Long id);
+
+    /**
+     * Выборка всех тегов сообщения
+     * @param postId Идентификатор сообщения
+     * @return Набор тегов сообщения
+     */
+    Set<Tag> findAllByPostId(Long postId);
+
+    /**
+     * Проверка наличия определённого тега у сообщения
+     * @param postId Идентификатор сообщения
+     * @param name   Имя тега
+     * @return флаг наличия
+     */
     boolean existsByPostIdAndName(Long postId, String name);
-//    /**
-//     * Добавление тега сообщению
-//     *
-//     * @param postId Идентификатор сообщения
-//     * @param name   Название тега
-//     */
-//    void add(Long postId, String name);
-//
-//    /**
-//     * Удаление тега
-//     *
-//     * @param id    Идентификатор тега
-//     */
-//    void del(Long id);
-//
-//    /**
-//     * Получение всех тегов сообщения
-//     *
-//     * @param postId
-//     * @return
-//     */
-//    Collection<Tag> findAllByPostId(Long postId);
 }
